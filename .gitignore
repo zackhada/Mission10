@@ -1,0 +1,15 @@
+# .NET
+BowlingAPI/bin/
+BowlingAPI/obj/
+
+# React
+bowling-frontend/node_modules/
+bowling-frontend/build/
+
+# IDE
+.vs/
+.vscode/
+*.user
+
+# OS
+.DS_Store
