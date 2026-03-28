@@ -1,0 +1,161 @@
+@model Bookstore.Models.ViewModels.BookListViewModel
+@{
+    ViewData["Title"] = "Book List";
+}
+
+<div class="row">
+    <!-- Category Sidebar with Accordion -->
+    <div class="col-md-3">
+        <h5 class="mb-3">Browse by Category</h5>
+        <div class="accordion" id="categoryAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingAll">
+                    <button class="accordion-button @(Model.CurrentCategory == null ? "" : "collapsed")" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#collapseAll"
+                            aria-expanded="@(Model.CurrentCategory == null ? "true" : "false")" aria-controls="collapseAll">
+                        All Categories
+                    </button>
+                </h2>
+                <div id="collapseAll" class="accordion-collapse collapse @(Model.CurrentCategory == null ? "show" : "")"
+                     aria-labelledby="headingAll" data-bs-parent="#categoryAccordion">
+                    <div class="accordion-body">
+                        <a asp-action="Index" class="btn btn-sm @(Model.CurrentCategory == null ? "btn-primary" : "btn-outline-primary") w-100">
+                            All Books
+                            <span class="badge bg-secondary">@Model.PagingInfo.TotalItems</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingCategories">
+                    <button class="accordion-button @(Model.CurrentCategory != null ? "" : "collapsed")" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#collapseCategories"
+                            aria-expanded="@(Model.CurrentCategory != null ? "true" : "false")" aria-controls="collapseCategories">
+                        Categories
+                    </button>
+                </h2>
+                <div id="collapseCategories" class="accordion-collapse collapse @(Model.CurrentCategory != null ? "show" : "")"
+                     aria-labelledby="headingCategories" data-bs-parent="#categoryAccordion">
+                    <div class="accordion-body p-2">
+                        <div class="list-group list-group-flush">
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <a asp-action="Index" asp-route-category="@cat"
+                                   class="list-group-item list-group-item-action @(cat == Model.CurrentCategory ? "active" : "")">
+                                    @cat
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Summary Card -->
+        @if (Model.Cart.TotalItems > 0)
+        {
+            <div class="card mt-3 border-success">
+                <div class="card-header bg-success text-white">
+                    Cart Summary
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>@Model.Cart.TotalItems</strong> item(s) in cart
+                    </p>
+                    <p class="card-text">
+                        Total: <strong>$@Model.Cart.Total.ToString("F2")</strong>
+                    </p>
+                    <a asp-controller="Cart" asp-action="ViewCart" class="btn btn-success btn-sm w-100">
+                        View Cart
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Book List -->
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>
+                @if (Model.CurrentCategory != null)
+                {
+                    @Model.CurrentCategory
+                    <span class="badge bg-info">@Model.PagingInfo.TotalItems books</span>
+                }
+                else
+                {
+                    <span>All Books</span>
+                    <span class="badge bg-info">@Model.PagingInfo.TotalItems books</span>
+                }
+            </h4>
+        </div>
+
+        <div class="row">
+            @foreach (var book in Model.Books)
+            {
+                <div class="col-12 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 class="card-title">@book.Title</h5>
+                                    <p class="card-text text-muted mb-1">
+                                        <strong>Author:</strong> @book.Author
+                                    </p>
+                                    <p class="card-text text-muted mb-1">
+                                        <strong>Publisher:</strong> @book.Publisher
+                                    </p>
+                                    <p class="card-text text-muted mb-1">
+                                        <strong>ISBN:</strong> @book.Isbn
+                                    </p>
+                                    <p class="card-text mb-1">
+                                        <span class="badge bg-secondary"
+                                              data-bs-toggle="tooltip"
+                                              data-bs-placement="top"
+                                              title="Category: @book.Category | Classification: @book.Classification">
+                                            @book.Category
+                                        </span>
+                                        <span class="badge bg-outline-secondary border text-dark ms-1">@book.Classification</span>
+                                        <span class="badge bg-light text-dark border ms-1"
+                                              data-bs-toggle="tooltip"
+                                              data-bs-placement="top"
+                                              title="This book has @book.PageCount pages">
+                                            @book.PageCount pages
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-end d-flex flex-column justify-content-between">
+                                    <h4 class="text-success">$@book.Price.ToString("F2")</h4>
+                                    <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                        <input type="hidden" name="bookId" value="@book.BookId" />
+                                        <input type="hidden" name="returnUrl"
+                                               value="@Url.Action("Index", "Home", new { category = Model.CurrentCategory, page = Model.PagingInfo.CurrentPage })" />
+                                        <button type="submit" class="btn btn-primary btn-sm"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Add @book.Title to your cart">
+                                            Add to Cart
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.PagingInfo.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-center mt-3">
+                <div page-model="@Model.PagingInfo"
+                     page-action="Index"
+                     page-category="@Model.CurrentCategory"
+                     page-class-normal="btn btn-outline-primary"
+                     page-class-selected="btn btn-primary">
+                </div>
+            </div>
+        }
+    </div>
+</div>
